@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+npm-debug.log
+*.log
+.env
+.DS_Store
+README.md
+CONTRIBUTING.md
+cloudbuild.yaml

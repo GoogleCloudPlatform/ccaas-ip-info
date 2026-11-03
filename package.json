@@ -1,0 +1,18 @@
+{
+  "name": "ccaas-token-service",
+  "version": "1.0.0",
+  "description": "Generates signed JWTs for CCAI Platform Web SDK initialization",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^8.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

@@ -1,0 +1,88 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+steps:
+  # 1. Build the container image using Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-t'
+      - '$_AR_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+      - '.'
+
+  # 2. Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - '$_AR_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+
+  # 3. Deploy to Region 1
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-region-1'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '$_SERVICE_NAME'
+      - '--image=$_AR_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+      - '--region=$_REGION_1'
+      - '--service-account=$_SERVICE_ACCOUNT'
+      - '--ingress=$_INGRESS'
+      - '--allow-unauthenticated'
+      - '--set-secrets=COMPANY_SECRET=$_COMPANY_SECRET_NAME:latest,APP_TOKEN_SECRET=$_APP_TOKEN_SECRET_NAME:latest,IPINFO_TOKEN=$_IPINFO_SECRET_NAME:latest,COMPANY_ID=$_COMPANY_ID_NAME:latest,CCAAS_HOST=$_CCAAS_HOST_NAME:latest'
+      - '--set-env-vars=USE_IPINFO=$_USE_IPINFO,DEBUG_PAYLOAD=$_DEBUG_PAYLOAD,DATABASE_ID=$_DATABASE_ID,SERVE_DEMO=$_SERVE_DEMO,TRUST_PROXY_HOPS=$_TRUST_PROXY_HOPS,ALLOWED_ORIGINS=$_ALLOWED_ORIGINS,APP_TOKEN_ISSUER=$_APP_TOKEN_ISSUER,APP_TOKEN_AUDIENCE=$_APP_TOKEN_AUDIENCE'
+
+  # 4. Deploy to Region 2
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-region-2'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '$_SERVICE_NAME'
+      - '--image=$_AR_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+      - '--region=$_REGION_2'
+      - '--service-account=$_SERVICE_ACCOUNT'
+      - '--ingress=$_INGRESS'
+      - '--allow-unauthenticated'
+      - '--set-secrets=COMPANY_SECRET=$_COMPANY_SECRET_NAME:latest,APP_TOKEN_SECRET=$_APP_TOKEN_SECRET_NAME:latest,IPINFO_TOKEN=$_IPINFO_SECRET_NAME:latest,COMPANY_ID=$_COMPANY_ID_NAME:latest,CCAAS_HOST=$_CCAAS_HOST_NAME:latest'
+      - '--set-env-vars=USE_IPINFO=$_USE_IPINFO,DEBUG_PAYLOAD=$_DEBUG_PAYLOAD,DATABASE_ID=$_DATABASE_ID,SERVE_DEMO=$_SERVE_DEMO,TRUST_PROXY_HOPS=$_TRUST_PROXY_HOPS,ALLOWED_ORIGINS=$_ALLOWED_ORIGINS,APP_TOKEN_ISSUER=$_APP_TOKEN_ISSUER,APP_TOKEN_AUDIENCE=$_APP_TOKEN_AUDIENCE'
+
+substitutions:
+  _AR_LOCATION: 'us-central1'
+  _REPO_NAME: 'ccaas-artifacts'
+  _IMAGE_NAME: 'ccaas-token-service'
+  _SERVICE_NAME: 'ccaas-token-service'
+  _REGION_1: 'us-central1'
+  _REGION_2: 'us-east1'
+  _SERVICE_ACCOUNT: 'ccaas-token-service@$PROJECT_ID.iam.gserviceaccount.com'
+  _INGRESS: 'internal-and-cloud-load-balancing'
+  _COMPANY_SECRET_NAME: 'ccaas-company-secret'
+  _APP_TOKEN_SECRET_NAME: 'ccaas-app-token-secret'
+  _IPINFO_SECRET_NAME: 'ipinfo-api-token'
+  _USE_IPINFO: 'true'
+  _DEBUG_PAYLOAD: 'false'
+  _COMPANY_ID_NAME: 'ccaas-company-id'
+  _CCAAS_HOST_NAME: 'ccaas-host'
+  _DATABASE_ID: 'ccaas-ip-check'
+  _SERVE_DEMO: 'false'
+  _TRUST_PROXY_HOPS: '1'
+  _ALLOWED_ORIGINS: ''
+  _APP_TOKEN_ISSUER: 'ccaas-upstream-app'
+  _APP_TOKEN_AUDIENCE: 'ccaas-enrichment-service'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
